@@ -7,18 +7,34 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 import numpy as np
 from sklearn.metrics import mean_absolute_error, mean_squared_error
+import sys
 
+# コマンドライン引数
+# エポック数 デフォルトは10
+ep = int(sys.argv[1]) if len(sys.argv) > 1 else 10
+# 実行するPythonファイルのパス
+file_path_excel = sys.argv[2] if len(sys.argv) > 1 else ""
+# 全体のデータ数に対する学習用データ数の割合 デフォルトは0.8
+train_data_ratio = float(sys.argv[3]) if len(sys.argv) > 1 else 0.8
 
 # Excelファイルからデータを読み込む
-data = pd.read_excel('data_13項目_修正版_male_1469.xlsx')  # Excelファイルを適切な名前に変更
+data = pd.read_excel(file_path_excel)
+
+# Excelファイルの最終行と最終列を取得
+num_data=data.shape[0]
+num_feature=data.shape[1]-1
+
+train_data_size=int(num_data*train_data_ratio)
+
+# print("print epochs=", ep, ", file_path_excel=", file_path_excel, ", num_data=", num_data, ", train_data_size=", train_data_size)
 
 # 特徴量と目的変数の設定
-X = data.iloc[:, 0:13]  # A列からU列（特徴量）（※データの特徴量に列によって要変更）
+X = data.iloc[:, 0:num_feature]  # 特徴量 最終列以外
 X.columns = X.columns.astype(str)  # カラム名を文字列に変換
-y = data.iloc[:, 13]    # V列（目的変数）（※データの目的変数に列によって要変更）
+y = data.iloc[:, num_feature]    # 目的変数 最終列
 
 # 学習用データ8割とテスト用データ2割に分割
-X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=1175) #train_size=学習用データの人数，random_state=42のように設定すると再現性がある
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=train_data_size) #train_size=学習用データの人数，random_state=42のように設定すると再現性がある
 
 #print("X_train columns:", X_train.columns)
 #print("X_test columns:", X_test.columns)
@@ -57,7 +73,7 @@ model = tf.keras.Sequential([
 model.compile(optimizer='adam', loss=tf.keras.losses.Huber()) #損失関数loss='mse'
 
 # モデルの学習
-history = model.fit(X_train_scaled, y_train_scaled, epochs=10, batch_size=128, verbose=0) #epochs=32,16,8 各10回max,min,ave
+history = model.fit(X_train_scaled, y_train_scaled, epochs=ep, batch_size=128, verbose=0) #epochs=32,16,8 各10回max,min,ave
 
 # 学習の最終loss値の取得
 final_loss = history.history['loss'][-1]  # 最後のエポックの損失値
@@ -91,7 +107,7 @@ accuracy = np.mean(correct_predictions) * 100  # 正解率（%）
 #accuracy = np.mean(correct_predictions) * 100  # 正解率（%）
 
 # 予測の正解率の表示
-print(f"\n予測の正解率（±5%以内を正解とする）: {accuracy:.2f}%")
+print(f"\n予測の正解率: {accuracy:.2f}%")
 
 # 最終損失値の表示
 print(f"学習の最終損失値 (loss): {final_loss:.4f}")
