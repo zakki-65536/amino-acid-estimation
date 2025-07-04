@@ -54,6 +54,11 @@ file_path_excel = 'data/data_20項目_female_2122.xlsx'
 # 全体のデータ数に対する学習用データ数の割合
 train_data_ratio=0.8
 
+# 実行開始時刻を表示
+dt=datetime.now()
+datetime_str = dt.strftime("%m/%d %H:%M:%S")
+print(f"{datetime_str} start")
+
 for epochs in epochs_list:
     # 10回実行して結果を取得
     accuracies, losses, outputs = execute_python_file(file_path_py, num_executions, epochs, file_path_excel, train_data_ratio)
