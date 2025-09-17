@@ -1,6 +1,10 @@
 import subprocess
 import re
 from datetime import datetime
+import requests
+import os
+from dotenv import load_dotenv
+import json
 
 def execute_python_file(file_path_py, num_executions, epochs, file_path_excel, train_data_ratio):
     accuracy_list = []
@@ -58,6 +62,7 @@ train_data_ratio=0.8
 dt=datetime.now()
 datetime_str = dt.strftime("%m/%d %H:%M:%S")
 print(f"{datetime_str} start")
+response_str=f"{datetime_str} start\n"
 
 for epochs in epochs_list:
     # 10回実行して結果を取得
@@ -76,5 +81,43 @@ for epochs in epochs_list:
         avg_loss = sum(losses) / len(losses)
 
         print(f"{datetime_str} {epochs} {avg_accuracy:.2f}% {avg_loss:.4f}")
+        response_str+=f"{datetime_str} {epochs} {avg_accuracy:.2f}% {avg_loss:.4f}\n"
     else:
         print("正解率または損失値の取得に失敗しました。")
+
+# メール通知APIを叩く
+load_dotenv()
+API_URL = os.getenv("API_URL")
+API_KEY = os.getenv("API_KEY")
+HTTP_PROXY = os.getenv("HTTP_PROXY")
+HTTPS_PROXY = os.getenv("HTTPS_PROXY")
+
+if not API_URL or not API_KEY:
+    print("API_URL, API_KEYが設定されていません")
+else:
+    header = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        'subject': "[amino-acid-estimation] 実行結果",
+        'body': response_str
+    }
+    proxies = {
+        "http": HTTP_PROXY,
+        "https": HTTPS_PROXY,
+    }
+    try:
+        # プロキシ環境
+        res = requests.post(API_URL, headers=header, json=payload, proxies=proxies)
+        res_json = res.json()
+        print(res_json["message"])
+    except requests.exceptions.RequestException:
+        try:
+            # プロキシ環境でない
+            res = requests.post(API_URL, headers=header, json=payload, timeout=10)
+            res_json = res.json()
+            print(res_json["message"])
+        except requests.exceptions.RequestException as e:
+            # エラー
+            print("Error:", e)
