@@ -54,15 +54,17 @@ epochs_list=[1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,200,300,400,500,60
 # epochs_list=[1,3]
 
 # データを格納しているExcelファイル
-file_path_excel = 'data/data_20項目_female_2122.xlsx'
+file_path_excel = 'data/data_14項目_空腹時_female_319.xlsx'
 # 全体のデータ数に対する学習用データ数の割合
 train_data_ratio=0.8
 
-# 実行開始時刻を表示
+# ファイル名と実行開始時刻を表示
+print(f"file: {file_path_excel}")
+response_str=f"file: {file_path_excel}\n"
 dt=datetime.now()
 datetime_str = dt.strftime("%m/%d %H:%M:%S")
 print(f"{datetime_str} start")
-response_str=f"{datetime_str} start\n"
+response_str+=f"{datetime_str} start\n"
 
 for epochs in epochs_list:
     # 10回実行して結果を取得
