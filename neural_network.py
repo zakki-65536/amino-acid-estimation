@@ -16,6 +16,10 @@ ep = int(sys.argv[1]) if len(sys.argv) > 1 else 10
 file_path_excel = sys.argv[2] if len(sys.argv) > 1 else ""
 # 全体のデータ数に対する学習用データ数の割合 デフォルトは0.8
 train_data_ratio = float(sys.argv[3]) if len(sys.argv) > 1 else 0.8
+# 出力ファイルのファイル名
+result_path_excel = sys.argv[4] if len(sys.argv) > 1 else ""
+# 出力ファイルのシート名
+result_sheet_name = sys.argv[5] if len(sys.argv) > 1 else ""
 
 # Excelファイルからデータを読み込む
 data = pd.read_excel(file_path_excel)
@@ -93,10 +97,12 @@ mse = mean_squared_error(y_test, y_pred)
 #print(f"平均二乗誤差 (MSE): {mse:.2f}")
 
 # 予測値の表示
-#print("\n予測結果:")
-#for i in range(len(y_pred)):
-    #print(f"予測値: {y_pred[i]:.2f}, 実際の値: {y_test.iloc[i]:.2f}")
-    #print(f"予測値: {y_pred[i]:.2f}, 実際の値: {y_train.iloc[i]:.2f}")
+# print("print start")
+# print(f"\n{result_sheet_name}")
+# print(f"\n予測結果({result_sheet_name}):")
+# for i in range(len(y_pred)):
+#     print(f"予測値: {y_pred[i]:.2f}, 実際の値: {y_test.iloc[i]:.2f}, 誤差: {(y_pred[i]-y_test.iloc[i]):.2f}, 実際の値の5%: {(y_test.iloc[i]*0.05):.2f}")
+# print("print end")
 
 # 正解率の計算 (+-5%以内を正解とする) 5%,10%,15%,5,10,15
 tolerance = 0.05  # ±5%
@@ -106,8 +112,16 @@ accuracy = np.mean(correct_predictions) * 100  # 正解率（%）
 #correct_predictions = np.abs(y_pred - y_train) <= tolerance * y_train
 #accuracy = np.mean(correct_predictions) * 100  # 正解率（%）
 
+print("print start")
+print(f"\n予測結果({result_sheet_name}):")
 # 予測の正解率の表示
 print(f"\n予測の正解率: {accuracy:.2f}%")
 
 # 最終損失値の表示
 print(f"学習の最終損失値 (loss): {final_loss:.4f}")
+print("print end")
+
+X_test['実際の値']=list(y_test)
+X_test['予測値']=list(y_pred)
+with pd.ExcelWriter(result_path_excel,engine='openpyxl', mode='a') as writer:
+    pd.DataFrame(X_test).to_excel(writer, sheet_name=result_sheet_name)

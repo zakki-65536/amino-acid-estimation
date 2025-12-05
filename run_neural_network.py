@@ -14,7 +14,7 @@ def execute_python_file(file_path_py, num_executions, epochs, file_path_excel, t
     for i in range(num_executions):
         try:
             result = subprocess.run(
-                ["python", file_path_py, str(epochs), str(file_path_excel), str(train_data_ratio)],
+                ["python", file_path_py, str(epochs), str(file_path_excel), str(train_data_ratio), str(result_path_excel), str(i+1).zfill(3)],
                 capture_output=True,
                 text=True,
                 check=True
@@ -23,10 +23,12 @@ def execute_python_file(file_path_py, num_executions, epochs, file_path_excel, t
             all_outputs.append(f"Run {i+1}:\n{output}\n")
 
             # 各行を調べて正解率と損失を抽出
+            isPrint=False
             for line in output.splitlines():
                 acc_match = re.search(r"予測の正解率.*?([\d.]+)%", line)
                 loss_match = re.search(r"学習の最終損失値 \(loss\): ([\d.]+)", line)
-                print_text = re.search(r".*print.*", line)
+                print_start = re.search(r".*print.*start.*", line)
+                print_end = re.search(r".*print.*end.*", line)
 
                 if acc_match:
                     accuracy = float(acc_match.group(1))
@@ -36,7 +38,11 @@ def execute_python_file(file_path_py, num_executions, epochs, file_path_excel, t
                     loss = float(loss_match.group(1))
                     loss_list.append(loss)
 
-                if print_text:
+                if print_start:
+                    isPrint=True
+                elif print_end:
+                    isPrint=False
+                elif isPrint:
                     print(line)
 
         except subprocess.CalledProcessError as e:
@@ -48,15 +54,17 @@ def execute_python_file(file_path_py, num_executions, epochs, file_path_excel, t
 # 実行するPythonファイルのパス
 file_path_py = r"neural_network.py"
 # 実行回数 この回数実行して平均をとる
-num_executions=10
+num_executions=100
 # 学習回数のリスト
-epochs_list=[1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,200,300,400,500,600,700,800,900,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000]
-# epochs_list=[1,3]
+# epochs_list=[1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,200,300,400,500,600,700,800,900,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000]
+epochs_list=[100]
 
 # データを格納しているExcelファイル
-file_path_excel = 'data/data_14項目_空腹時_female_319.xlsx'
+file_path_excel = 'data/data_13項目_空腹時_female_外れ値除去_287.xlsx'
 # 全体のデータ数に対する学習用データ数の割合
 train_data_ratio=0.8
+# 出力結果を保存するExcelファイル
+result_path_excel = 'data/result_13項目_空腹時_female_287_100回.xlsx'
 
 # ファイル名と実行開始時刻を表示
 print(f"file: {file_path_excel}")
