@@ -98,6 +98,7 @@ for epochs in epochs_list:
 # メール通知APIを叩く
 load_dotenv()
 API_URL = os.getenv("API_URL")
+API_URL_FILE = os.getenv("API_URL_FILE")
 API_KEY = os.getenv("API_KEY")
 HTTP_PROXY = os.getenv("HTTP_PROXY")
 HTTPS_PROXY = os.getenv("HTTPS_PROXY")
@@ -117,17 +118,31 @@ else:
         "http": HTTP_PROXY,
         "https": HTTPS_PROXY,
     }
-    try:
-        # プロキシ環境
-        res = requests.post(API_URL, headers=header, json=payload, proxies=proxies)
-        res_json = res.json()
-        print(res_json["message"])
-    except requests.exceptions.RequestException:
+    
+    with open(result_path_excel, "rb") as f:
+        files = {
+            # PHP側は最初のファイルフィールドを拾うので、name は "excel" でも "file" でもOK
+            "excel": (os.path.basename(result_path_excel), f,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        }
+
         try:
-            # プロキシ環境でない
-            res = requests.post(API_URL, headers=header, json=payload, timeout=10)
+            # プロキシ環境
+            res = requests.post(API_URL, headers=header, json=payload, proxies=proxies)
             res_json = res.json()
             print(res_json["message"])
-        except requests.exceptions.RequestException as e:
-            # エラー
-            print("Error:", e)
+            res = requests.post(API_URL_FILE, files=files, proxies=proxies, timeout=60)
+            res_json = res.json()
+            print(res_json["message"])
+        except requests.exceptions.RequestException:
+            try:
+                # プロキシ環境でない
+                res = requests.post(API_URL, headers=header, json=payload, timeout=10)
+                res_json = res.json()
+                print(res_json["message"])
+                res = requests.post(API_URL_FILE, files=files, timeout=60)
+                res_json = res.json()
+                print(res_json["message"])
+            except requests.exceptions.RequestException as e:
+                # エラー
+                print("Error:", e)
