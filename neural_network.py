@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import sys
+from datetime import datetime
 
 # コマンドライン引数
 # エポック数 デフォルトは10
@@ -18,8 +19,8 @@ file_path_excel = sys.argv[2] if len(sys.argv) > 1 else ""
 train_data_ratio = float(sys.argv[3]) if len(sys.argv) > 1 else 0.8
 # 出力ファイルのファイル名
 result_path_excel = sys.argv[4] if len(sys.argv) > 1 else ""
-# 出力ファイルのシート名
-result_sheet_name = sys.argv[5] if len(sys.argv) > 1 else ""
+# 出力列のタイトル
+column_title = sys.argv[5] if len(sys.argv) > 1 else ""
 
 # Excelファイルからデータを読み込む
 data = pd.read_excel(file_path_excel)
@@ -98,8 +99,8 @@ mse = mean_squared_error(y_test, y_pred)
 
 # 予測値の表示
 # print("print start")
-# print(f"\n{result_sheet_name}")
-# print(f"\n予測結果({result_sheet_name}):")
+# print(f"\n{column_title}")
+# print(f"\n予測結果({column_title}):")
 # for i in range(len(y_pred)):
 #     print(f"予測値: {y_pred[i]:.2f}, 実際の値: {y_test.iloc[i]:.2f}, 誤差: {(y_pred[i]-y_test.iloc[i]):.2f}, 実際の値の5%: {(y_test.iloc[i]*0.05):.2f}")
 # print("print end")
@@ -113,15 +114,33 @@ accuracy = np.mean(correct_predictions) * 100  # 正解率（%）
 #accuracy = np.mean(correct_predictions) * 100  # 正解率（%）
 
 print("print start")
-print(f"\n予測結果({result_sheet_name}):")
+# print(f"\n=== 予測結果({column_title}) ===")
 # 予測の正解率の表示
-print(f"\n予測の正解率: {accuracy:.2f}%")
-
+# print(f"予測の正解率: {accuracy:.2f}%")
 # 最終損失値の表示
-print(f"学習の最終損失値 (loss): {final_loss:.4f}")
+# print(f"学習の最終損失値 (loss): {final_loss:.4f}")
+dt=datetime.now()
+datetime_str = dt.strftime("%m/%d %H:%M:%S")
+print(f"{datetime_str} {column_title} {accuracy:.2f}% {final_loss:.4f}")
 print("print end")
 
-X_test['実際の値']=list(y_test)
-X_test['予測値']=list(y_pred)
-with pd.ExcelWriter(result_path_excel,engine='openpyxl', mode='a') as writer:
-    pd.DataFrame(X_test).to_excel(writer, sheet_name=result_sheet_name)
+result = pd.read_excel(result_path_excel, index_col=0)
+result=result.iloc[:, :]
+result.columns = result.columns.astype(str)
+
+# y_testのindexをDataFrameに変換
+y_test_index_df=pd.DataFrame(data=y_test.index,columns=["index"])
+# y_predのDataFrameにy_testのindexを結合
+y_pred_df = pd.DataFrame(data=y_pred,columns=[column_title])
+y_pred_result_df=y_pred_df.join(y_test_index_df, how='outer')
+y_pred_result_df.set_index("index",inplace=True)
+# 元のdataにy_predのDataFrameを結合
+result=result.join(y_pred_result_df, how='outer')
+# Excel出力
+pd.DataFrame(result).to_excel(result_path_excel, sheet_name = "Sheet1", startrow=0, startcol=0)
+
+# デバッグ用シート出力
+# X_test['実際の値']=list(y_test)
+# X_test['予測値']=list(y_pred)
+# with pd.ExcelWriter(result_path_excel,engine='openpyxl', mode='a') as writer:
+#     pd.DataFrame(X_test).to_excel(writer, sheet_name=column_title)
