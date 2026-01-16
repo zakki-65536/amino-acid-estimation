@@ -1,5 +1,6 @@
 # ニューラルネットワーク
 # インストールは"pip install pandas tensorflow scikit-learn openpyxl numpy"
+# (new) インストールは"pip install pytz"
 
 import pandas as pd
 import tensorflow as tf
