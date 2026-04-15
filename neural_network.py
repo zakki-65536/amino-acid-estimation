@@ -6,7 +6,7 @@ import tensorflow as tf
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 import numpy as np
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error, root_mean_squared_error
 import sys
 
 # コマンドライン引数
@@ -88,9 +88,10 @@ y_pred = scaler_y.inverse_transform(y_pred_scaled.reshape(-1, 1)).ravel()  # 予
 # 絶対平均誤差と平均二乗誤差の計算
 mae = mean_absolute_error(y_test, y_pred)
 mse = mean_squared_error(y_test, y_pred)
+rmse = root_mean_squared_error(y_test, y_pred)
 
-#print(f"\n絶対平均誤差 (MAE): {mae:.2f}")
-#print(f"平均二乗誤差 (MSE): {mse:.2f}")
+print(f"\nMAE: {mae:.2f}")
+print(f"RMSE: {rmse:.2f}")
 
 # 予測値の表示
 #print("\n予測結果:")

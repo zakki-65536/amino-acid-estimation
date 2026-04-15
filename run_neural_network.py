@@ -5,10 +5,13 @@ import requests
 import os
 from dotenv import load_dotenv
 import json
+import argparse
 
 def execute_python_file(file_path_py, num_executions, epochs, file_path_excel, train_data_ratio):
     accuracy_list = []
     loss_list = []
+    mae_list = []
+    rmse_list = []
     all_outputs = []
 
     for i in range(num_executions):
@@ -26,6 +29,8 @@ def execute_python_file(file_path_py, num_executions, epochs, file_path_excel, t
             for line in output.splitlines():
                 acc_match = re.search(r"予測の正解率.*?([\d.]+)%", line)
                 loss_match = re.search(r"学習の最終損失値 \(loss\): ([\d.]+)", line)
+                mae_match = re.search(r"MAE: ([\d.]+)", line)
+                rmse_match = re.search(r"RMSE: ([\d.]+)", line)
                 print_text = re.search(r".*print.*", line)
 
                 if acc_match:
@@ -36,13 +41,22 @@ def execute_python_file(file_path_py, num_executions, epochs, file_path_excel, t
                     loss = float(loss_match.group(1))
                     loss_list.append(loss)
 
+                if mae_match:
+                    mae = float(mae_match.group(1))
+                    mae_list.append(mae)
+
+                if rmse_match:
+                    rmse = float(rmse_match.group(1))
+                    rmse_list.append(rmse)
+
+
                 if print_text:
                     print(line)
 
         except subprocess.CalledProcessError as e:
             print(f"エラー: 実行{i+1}回目に失敗しました\n{e.stderr}")
 
-    return accuracy_list, loss_list, all_outputs
+    return accuracy_list, loss_list, mae_list, rmse_list, all_outputs
 
 
 # 実行するPythonファイルのパス
@@ -50,11 +64,16 @@ file_path_py = r"neural_network.py"
 # 実行回数 この回数実行して平均をとる
 num_executions=10
 # 学習回数のリスト
-epochs_list=[1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,200,300,400,500,600,700,800,900,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000]
+epochs_list=[1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,200,300,400,500]
 # epochs_list=[1,3]
 
 # データを格納しているExcelファイル
-file_path_excel = 'data/data_20項目_female_2122.xlsx'
+# file_path_excel = 'data/data_20項目_female_2122.xlsx'
+parser = argparse.ArgumentParser()
+parser.add_argument("--data", required=True, help="Excelファイルパス (.xlsx)")
+args = parser.parse_args()
+file_path_excel=args.data
+
 # 全体のデータ数に対する学習用データ数の割合
 train_data_ratio=0.8
 
@@ -66,7 +85,7 @@ response_str=f"{datetime_str} start\n"
 
 for epochs in epochs_list:
     # 10回実行して結果を取得
-    accuracies, losses, outputs = execute_python_file(file_path_py, num_executions, epochs, file_path_excel, train_data_ratio)
+    accuracies, losses, maes, rmses, outputs = execute_python_file(file_path_py, num_executions, epochs, file_path_excel, train_data_ratio)
 
     # 各実行の出力表示（任意）
     #for output in outputs:
@@ -79,9 +98,11 @@ for epochs in epochs_list:
 
         avg_accuracy = sum(accuracies) / len(accuracies)
         avg_loss = sum(losses) / len(losses)
+        avg_mae = sum(maes) / len(maes)
+        avg_rmse = sum(rmses) / len(rmses)
 
-        print(f"{datetime_str} {epochs} {avg_accuracy:.2f}% {avg_loss:.4f}")
-        response_str+=f"{datetime_str} {epochs} {avg_accuracy:.2f}% {avg_loss:.4f}\n"
+        print(f"{datetime_str} {epochs} {avg_accuracy:.2f}% {avg_loss:.4f} {avg_mae:.4f} {avg_rmse:.4f}")
+        response_str+=f"{datetime_str} {epochs} {avg_accuracy:.2f}% {avg_loss:.4f} {avg_mae:.4f} {avg_rmse:.4f}\n"
     else:
         print("正解率または損失値の取得に失敗しました。")
 
