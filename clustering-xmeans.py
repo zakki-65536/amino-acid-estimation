@@ -4,8 +4,8 @@ from pyclustering.cluster.xmeans import xmeans, kmeans_plusplus_initializer
 import numpy as np
 
 # ファイルパス
-file_path_excel = 'data/data_クラスタリング用_13項目_空腹時_female_319.xlsx'
-file_path_result = 'data/result_xmeans_クラスタリング_13項目_空腹時_female.xlsx'
+file_path_excel = 'data/data_クラスタリング用_60項目.xlsx'
+file_path_result = 'data/result_xmeans_クラスタリング_60項目.xlsx'
 
 # データの読み込み
 data = pd.read_excel(file_path_excel)
